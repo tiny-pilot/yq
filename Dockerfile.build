@@ -1,0 +1,23 @@
+FROM golang:1.20.7 AS builder
+
+RUN apt-get update
+RUN apt-get install -y \
+  devscripts \
+  pandoc \
+  rsync
+
+COPY ./ /app
+
+WORKDIR /app
+
+RUN mk-build-deps
+
+RUN go mod vendor
+
+RUN debuild -i -ui -uc -us
+
+RUN find . -name '*.deb'
+
+FROM scratch as artifact
+
+COPY --from=builder "*.deb" ./
